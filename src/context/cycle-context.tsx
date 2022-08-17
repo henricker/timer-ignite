@@ -37,23 +37,39 @@ type CycleContextType = {
 export const CycleContext = createContext({} as CycleContextType)
 
 export function CycleContextProvider({ children }: CycleContextProviderProps) {
-  const [cyclesState, dispatch] = useReducer(cyclesReducer, {
-    cycles: [],
-    currentCycleId: null,
-  })
+  const [cyclesState, dispatch] = useReducer(
+    cyclesReducer,
+    {
+      cycles: [],
+      currentCycleId: null,
+    },
+    () => {
+      const cycleState = localStorage.getItem(
+        '@ignite-timer:cycles-state-1.0.0',
+      )
+
+      if (!cycleState) {
+        return {
+          cycles: [],
+          currentCycleId: null,
+        }
+      }
+
+      return JSON.parse(cycleState)
+    },
+  )
 
   const { cycles, currentCycleId } = cyclesState
 
   useEffect(() => {
     const stateJSON = JSON.stringify(cyclesState)
-
     localStorage.setItem('@ignite-timer:cycles-state-1.0.0', stateJSON)
   }, [cyclesState])
 
   const hasActiveCycle = cycles.find((c) => c.id === currentCycleId)
   const [totalSecondsAmount, settotalSecondsAmount] = useState(() => {
     if (hasActiveCycle) {
-      return differenceInSeconds(new Date(), hasActiveCycle.createdAt)
+      return differenceInSeconds(new Date(), new Date(hasActiveCycle.createdAt))
     }
 
     return 0
